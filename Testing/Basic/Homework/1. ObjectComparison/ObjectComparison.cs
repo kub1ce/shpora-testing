@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using NUnit.Framework.Legacy;
+using FluentAssertions;
 
 namespace HomeExercise.Tasks.ObjectComparison;
 public class ObjectComparison
@@ -14,16 +15,13 @@ public class ObjectComparison
         var expectedTsar = new Person("Ivan IV The Terrible", 54, 170, 70,
             new Person("Vasili III of Russia", 28, 170, 60, null));
 
-        // Перепишите код на использование Fluent Assertions.
-        ClassicAssert.AreEqual(actualTsar.Name, expectedTsar.Name);
-        ClassicAssert.AreEqual(actualTsar.Age, expectedTsar.Age);
-        ClassicAssert.AreEqual(actualTsar.Height, expectedTsar.Height);
-        ClassicAssert.AreEqual(actualTsar.Weight, expectedTsar.Weight);
-
-        ClassicAssert.AreEqual(expectedTsar.Parent!.Name, actualTsar.Parent!.Name);
-        ClassicAssert.AreEqual(expectedTsar.Parent.Age, actualTsar.Parent.Age);
-        ClassicAssert.AreEqual(expectedTsar.Parent.Height, actualTsar.Parent.Height);
-        ClassicAssert.AreEqual(expectedTsar.Parent.Parent, actualTsar.Parent.Parent);
+        // Id берётся из статического счетчика где для каждого созданного экземпляра он разный
+        actualTsar.Should().BeEquivalentTo(expectedTsar, options => options
+            .Excluding(ctx => ctx.Name == "Id"));
+        
+        // 1. новое поле класса проверяется автоматически
+        // 2. FluentAssertions показывает, какое именно поле упало, в отличие от AreEqual
+        // 3. Id задан явно (исключение)
     }
 
     [Test]
@@ -35,6 +33,10 @@ public class ObjectComparison
             new Person("Vasili III of Russia", 28, 170, 60, null));
 
         // Какие недостатки у такого подхода? 
+        // 1. при добавлении поля в Person нужно вручную дописывать его, тк тест не будет его проверять
+        //                                                                     и тупо будет проходиться
+        // 2. непонятно, какое именно поле отличается
+        // 3. нужно самому писать и поддерживать рекурсивный обход Parent
         ClassicAssert.True(AreEqual(actualTsar, expectedTsar));
     }
 
