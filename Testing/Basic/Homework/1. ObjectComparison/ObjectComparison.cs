@@ -1,6 +1,7 @@
 ﻿using NUnit.Framework;
 using NUnit.Framework.Legacy;
 using FluentAssertions;
+using System.Text.RegularExpressions;
 
 namespace HomeExercise.Tasks.ObjectComparison;
 public class ObjectComparison
@@ -17,11 +18,14 @@ public class ObjectComparison
 
         // Id берётся из статического счетчика где для каждого созданного экземпляра он разный
         actualTsar.Should().BeEquivalentTo(expectedTsar, options => options
-            .Excluding(ctx => ctx.Name == "Id"));
+            .Excluding(ctx => ctx.DeclaringType == typeof(Person) && ctx.Name == nameof(Person.Id)));
+        
+            // ИЛИ еще думал: .Excluding(ctx => Regex.IsMatch(ctx.Path, @"^(Parent\.)*Id$")));
+            // но этот вариант сломается ели в Person добавить ещё одно поле типа Person
         
         // 1. новое поле класса проверяется автоматически
         // 2. FluentAssertions показывает, какое именно поле упало, в отличие от AreEqual
-        // 3. Id задан явно (исключение)
+        // 3. Исключение только Id объектов Person в цепочке Parent, т.к. они генерируются автоматически
     }
 
     [Test]
@@ -33,9 +37,9 @@ public class ObjectComparison
             new Person("Vasili III of Russia", 28, 170, 60, null));
 
         // Какие недостатки у такого подхода? 
-        // 1. при добавлении поля в Person нужно вручную дописывать его, тк тест не будет его проверять
-        //                                                                     и тупо будет проходиться
-        // 2. непонятно, какое именно поле отличается
+        // 1. при добавлении поля в Person нужно вручную дописывать его, тк тест 
+        //    не будет проверять новое поле и может продолжать проходить.
+        // 2. непонятно, какое именно поле отличается при падении теста
         // 3. нужно самому писать и поддерживать рекурсивный обход Parent
         ClassicAssert.True(AreEqual(actualTsar, expectedTsar));
     }
